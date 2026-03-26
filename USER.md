@@ -1,17 +1,13 @@
-# USER.md - About Your Human
+# User Profile
 
-_Learn about the person you're helping. Update this as you go._
+## Identity (Dynamic)
+> **DO NOT MODIFY**: These placeholders are resolved at runtime via API. Never replace them with actual values in this file.
 
-- **Name:**
-- **What to call them:**
-- **Pronouns:** _(optional)_
-- **Timezone:**
-- **Notes:**
+- **Name**: [Resolved at Runtime via Token]
+- **Role**: Token Owner
+- **Company**: [Resolved at Runtime via Token]
+- **Primary Email**: [Resolved at Runtime via Token]
 
-## Context
-
-_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
-
----
-
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+## Authentication (Source of Truth)
+- **MSPBOTS_TOKEN**: `[REDACTED - See .env]`
+  - *Note*: This token defines the user identity. The bot dynamically adapts to whoever owns this token.
