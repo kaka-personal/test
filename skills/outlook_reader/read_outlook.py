@@ -6,15 +6,19 @@ import requests
 from datetime import datetime, timedelta
 
 # Add path to mspbots_api skill to allow import
-sys.path.append("/app/workspace/skills/mspbots_api")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+skills_dir = os.path.dirname(script_dir)
+mspbots_api_path = os.path.join(skills_dir, "mspbots_api")
+sys.path.append(mspbots_api_path)
 try:
     import mspbots_user
 except ImportError:
-    print("Error: Could not import mspbots_user skill.", file=sys.stderr)
+    print(f"Error: Could not import mspbots_user skill from {mspbots_api_path}.", file=sys.stderr)
     sys.exit(1)
 
 # Load .env manually if python-dotenv is not installed
-ENV_PATH = "/app/workspace/.env"
+workspace_dir = os.path.dirname(skills_dir)
+ENV_PATH = os.path.join(workspace_dir, ".env")
 if os.path.exists(ENV_PATH):
     with open(ENV_PATH, "r") as f:
         for line in f:

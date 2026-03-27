@@ -1,8 +1,16 @@
 import requests
 import os
 import json
+from dotenv import load_dotenv
+import sys
+
+# Ensure UTF-8 output even on Windows
+if sys.stdout.encoding != 'utf-8':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # Configuration
+load_dotenv()
 API_URL_TEMPLATE = "https://app.mspbots.ai/api/v2/datasets/{}/query"
 TOKEN = os.environ.get("MSPBOTS_TOKEN")
 
@@ -36,22 +44,22 @@ for ds in datasets:
             rows = data.get("data", [])
             
             if rows:
-                status = "✅ Active"
+                status = "[Active]"
                 count = "1+ (Data exists)"
                 # Get first 3 columns as sample
                 cols = list(rows[0].keys())[:3]
                 cols_str = ", ".join(cols) + "..."
             else:
-                status = "⚠️ Empty"
+                status = "[Empty]"
                 count = "0"
                 cols_str = "N/A"
         else:
-            status = f"❌ Error {response.status_code}"
+            status = f"[Error {response.status_code}]"
             count = "N/A"
             cols_str = response.text[:20]
             
     except Exception as e:
-        status = "❌ Failed"
+        status = "[Failed]"
         count = "N/A"
         cols_str = str(e)[:20]
 

@@ -8,7 +8,7 @@ from pathlib import Path
 CACHE_FILE = Path("/app/workspace/skills/executive_signals/dataset_cache.json")
 CACHE_TTL = 86400  # 24 hours
 
-OWL_TOOL_PATH = "/app/workspace/skills/owl_mcp/call_tool.py"
+MSPBOTS_DATASET_TOOL_PATH = "/app/workspace/skills/mspbots-dataset/dataset_api.py"
 
 # Signatures for Intent-Based Discovery
 DATASET_SIGNATURES = {
@@ -44,36 +44,32 @@ DATASET_SIGNATURES = {
     }
 }
 
-def call_owl_search(query):
-    """Calls the Owl MCP search_dataset tool."""
+def call_mspbots_search(query):
+    """Calls the MSPbots dataset search tool."""
     try:
-        cmd = ["python3", OWL_TOOL_PATH, "search_dataset", json.dumps({"query": query, "top_k": 5})]
+        cmd = ["python3", MSPBOTS_DATASET_TOOL_PATH, "search", query]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"Search failed: {result.stderr}")
             return []
         
-        # Parse the output. call_tool.py usually returns a JSON object.
-        # We need to handle potentially wrapped responses.
         data = json.loads(result.stdout)
         
-        # The tool might return { "result": [ ... ] } or just [ ... ] depending on implementation
-        # Based on SKILL.md, it returns titles, URLs, snippets? No, that's web_search.
-        # Owl MCP search_dataset returns a list of datasets.
-        
-        if isinstance(data, dict):
-            if "content" in data and isinstance(data["content"], list):
-                 # MCP standard response text? No, call_tool usually outputs the tool result directly.
-                 pass
-            if "result" in data:
-                return data["result"]
-            
+        # Based on search_dataset_via_rag API:
+        # Returns: List of datasets and their basic information
         if isinstance(data, list):
             return data
+        
+        if isinstance(data, dict):
+            # If the response is wrapped
+            if "result" in data:
+                return data["result"]
+            if "datasets" in data:
+                return data["datasets"]
             
         return []
     except Exception as e:
-        print(f"Error calling Owl search: {e}")
+        print(f"Error calling MSPbots search: {e}")
         return []
 
 def resolve_dataset_id(intent_name, psa_name="ConnectWise Manage"):
@@ -109,7 +105,7 @@ def resolve_dataset_id(intent_name, psa_name="ConnectWise Manage"):
     search_query = sig["query"].format(psa=psa_name)
     
     print(f"🔍 Discovering dataset for '{intent_name}' using query: '{search_query}'...")
-    results = call_owl_search(search_query)
+    results = call_mspbots_search(search_query)
     
     if not results:
         print(f"⚠️ No datasets found for {intent_name}. Using fallback or failing.")
