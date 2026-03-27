@@ -8,7 +8,8 @@ from pathlib import Path
 CACHE_FILE = Path("/app/workspace/skills/executive_signals/dataset_cache.json")
 CACHE_TTL = 86400  # 24 hours
 
-MSPBOTS_DATASET_TOOL_PATH = "/app/workspace/skills/mspbots-dataset/dataset_api.py"
+import os
+MSPBOTS_DATASET_TOOL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mspbots-dataset", "dataset_api.py")
 
 # Signatures for Intent-Based Discovery
 DATASET_SIGNATURES = {

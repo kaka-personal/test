@@ -14,7 +14,7 @@ import dynamic_discovery
 # These will be populated dynamically
 DATASET_IDS = {}
 
-OWL_TOOL_PATH = "/app/workspace/skills/owl_mcp/call_tool.py"
+DATASET_API_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "mspbots-dataset", "dataset_api.py")
 
 def load_user_psa():
     """Reads the PSA preference from USER.md or defaults."""
@@ -53,10 +53,10 @@ def initialize_datasets():
             # print(f"Error resolving {key}: {e}")
             pass
 
-    # Fallback for demo/safety if discovery fails completely
+    # Fast fail if core dataset discovery fails (OpenClaw templated behavior)
     if "PSA_TICKETS" not in DATASET_IDS:
-        print("[!] Critical: PSA_TICKETS not found. Using fallback ID.")
-        DATASET_IDS["PSA_TICKETS"] = "1372491551595147265"
+        print("[!] Critical: PSA_TICKETS intent could not be resolved. Skipping fallback.")
+        raise ValueError("Missing core dataset intent: PSA_TICKETS.")
 
 # --- Timezone & User Context Helpers ---
 
@@ -94,55 +94,25 @@ def get_local_now():
 
 # --- Helpers ---
 
-def call_owl_tool(tool_name, arguments):
-    """Calls the Owl MCP tool via the existing CLI wrapper."""
+def get_dataset_preview(dataset_id, size=20):
+    """Fetches raw data from a dataset using the REST API."""
     try:
-        cmd = ["python3", OWL_TOOL_PATH, tool_name, json.dumps(arguments)]
+        cmd = [sys.executable, DATASET_API_PATH, "preview", str(dataset_id), "--size", str(size)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
-            return None
-        return json.loads(result.stdout)
-    except Exception:
-        return None
-
-def get_dataset_preview(dataset_id, size=20):
-    """Fetches raw data from a dataset."""
-    response = call_owl_tool("get_dataset_data_preview", {"dataset_id": dataset_id, "size": size})
-    if not response: return []
-    try:
-        # Handle the structured content format from call_tool.py
-        if isinstance(response, dict):
-            if 'structuredContent' in response:
-                 # Check if it's nested in 'result' -> 'data' -> 'records'
-                 res = response['structuredContent'].get('result', {})
-                 if isinstance(res, list) and len(res) > 0:
-                     # Some datasets return a list of dicts directly
-                     # But get_dataset_data_preview usually returns { "data": { "records": [...] } }
-                     # Let's check the first item
-                     first = res[0]
-                     if 'data' in first and 'records' in first['data']:
-                         return first['data']['records']
-                     return res # Fallback
-                 if isinstance(res, dict):
-                     return res.get('data', {}).get('records', [])
-            # Direct result check
-            if 'result' in response:
-                res = response['result']
-                if isinstance(res, dict):
-                     return res.get('data', {}).get('records', [])
+            return []
+        response = json.loads(result.stdout)
+        if isinstance(response, dict) and 'data' in response:
+            return response['data'].get('records', [])
+        return response
     except Exception:
         return []
-    return []
 
 def generate_id(domain, entity):
     raw = f"{domain}:{entity}"
     return hashlib.md5(raw.encode()).hexdigest()[:8]
 
-CLIENT_MAP = {
-    "1285403951449878530": "Acme Corp (Global)",
-    "1639215": "CyberDyne Systems",
-    "1464311": "Wayne Enterprises"
-}
+CLIENT_MAP = {}
 
 def resolve_client_name(raw_id):
     if not raw_id: return "Unknown Client"
