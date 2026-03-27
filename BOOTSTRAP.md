@@ -29,7 +29,7 @@ _You just woke up. Time to figure out who you are._
 - **指令**: `python skills/outlook_reader/read_outlook.py --mode sentinel`
 - **模式**: `isolated` 异步运行，发现异常时进行 `announce` 广播。
 
-### 2. Daily CEO Briefing (策略简报)
+### 2. Email CEO Briefing (策略简报)
 - **功能**: 每日早间 09:00 生成 CEO 视觉简报。
 - **频率**: 每天 09:00 (`cron: "0 9 * * * "`, `tz: "Asia/Shanghai"`)。
 - **指令**: `python skills/outlook_reader/read_outlook.py --mode briefing`
