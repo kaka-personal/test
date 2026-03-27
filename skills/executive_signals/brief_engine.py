@@ -33,7 +33,7 @@ def initialize_datasets():
     """Resolves dataset IDs dynamically."""
     global DATASET_IDS
     psa = load_user_psa()
-    print(f"🔄 Initializing datasets for PSA: {psa}...")
+    print(f"[*] Initializing datasets for PSA: {psa}...")
     
     # Map internal keys to discovery intents
     mapping = {
@@ -48,13 +48,14 @@ def initialize_datasets():
             if found_id:
                 DATASET_IDS[key] = found_id
             else:
-                print(f"⚠️ Could not resolve {key}, some features may be disabled.")
+                print(f"[!] Could not resolve {key}, some features may be disabled.")
         except Exception as e:
-            print(f"Error resolving {key}: {e}")
+            # print(f"Error resolving {key}: {e}")
+            pass
 
     # Fallback for demo/safety if discovery fails completely
     if "PSA_TICKETS" not in DATASET_IDS:
-        print("⚠️ Critical: PSA_TICKETS not found. Using fallback ID.")
+        print("[!] Critical: PSA_TICKETS not found. Using fallback ID.")
         DATASET_IDS["PSA_TICKETS"] = "1372491551595147265"
 
 # --- Timezone & User Context Helpers ---
@@ -297,64 +298,64 @@ def print_prd_brief(signals, stats):
     rmm_issues = [s for s in signals if s['domain'] == "RMM"]
 
     # A1: Header
-    status_badge = "🔴 需关注 (Needs Attention)" if any("CRITICAL" in s['severity'] for s in signals) else "🟢 状态良好 (Stable)"
-    print(f"# 📅 每日高管信号简报")
-    print(f"**日期**: {today} | **状态**: {status_badge}")
+    status_badge = "[Attention Required]" if any("CRITICAL" in s['severity'] for s in signals) else "[Stable]"
+    print(f"# Daily Executive Signals Briefing")
+    print(f"**Date**: {today} | **Status**: {status_badge}")
     
     # A2: Overview
     cross_domain_count = len([s for s in signals if s['is_cross_domain']])
-    print(f"\n> **总体概览**: 检测到 **{len(watchlist)}** 个客户存在 **{len(signals)}** 项异常。其中 **{cross_domain_count}** 项涉及跨领域风险，需要立即关注。")
+    print(f"\n> **Overview**: Detected **{len(watchlist)}** clients with **{len(signals)}** anomalies. Among them, **{cross_domain_count}** are cross-domain risks requiring immediate attention.")
 
     # A3: Top Issues
-    print(f"\n## 🚨 今日首要问题 (Top Issues)")
-    if not top_issues: print("今日无重大异常。")
+    print(f"\n## Top Issues Today")
+    if not top_issues: print("No major anomalies today.")
     for i, s in enumerate(top_issues, 1):
-        icon = "🔥" if s['is_cross_domain'] else "🔴"
+        icon = "!!!" if s['is_cross_domain'] else "!!"
         print(f"**{i}. {icon} {s['title']} - {s['client']}**")
-        print(f"   - *影响*: {s['message']}")
-        print(f"   - *建议*: {s['action']} (Owner: {s['owner']})")
+        print(f"   - *Impact*: {s['message']}")
+        print(f"   - *Recommendation*: {s['action']} (Owner: {s['owner']})")
 
     # A4: Watchlist
-    print(f"\n## 👁️ 重点关注客户 (Watchlist)")
+    print(f"\n## Watchlist")
     if not watchlist:
-        print("今日无高风险客户。")
+        print("No high-risk clients today.")
     else:
-        print("| 客户名称 | 风险等级 | 趋势 | 主要驱动因素 |")
+        print("| Client Name | Risk Level | Trend | Primary Drivers |")
         print("| :--- | :--- | :--- | :--- |")
         for client, data in list(watchlist.items())[:5]:
             domains = ", ".join(data['domains'])
-            risk = "🔴 高 (High)" if data['risk'] == "High" else "🟡 中 (Med)"
-            trend = "↗️ 上升" if data['trend'] == "Rising" else "➡️ 平稳"
+            risk = "High" if data['risk'] == "High" else "Med"
+            trend = "Rising" if data['trend'] == "Rising" else "Stable"
             print(f"| {client} | {risk} | {trend} | {domains} |")
 
     # A5: PSA Anomalies
-    print(f"\n## 🎫 服务交付异常 (PSA)")
+    print(f"\n## Service Delivery Anomalies (PSA)")
     if not psa_issues: 
-        print(f"- ✅ **服务概览**: 今日扫描 {stats.get('psa_count', 0)} 张工单，SLA 达标率 100%。")
+        print(f"- [OK] **Service Overview**: Scanned {stats.get('psa_count', 0)} tickets today, 100% SLA compliance.")
     else:
         for s in psa_issues[:3]:
             print(f"- **{s['client']}**: {s['title']} ({s['message']})")
 
     # A6: Financial Concerns
-    print(f"\n## 💰 财务关注事项")
+    print(f"\n## Financial Concerns")
     if not fin_issues: 
-        print(f"- ✅ **计费概览**: 今日处理工时 {stats.get('fin_hours', 0.0):.1f} 小时，无计费争议。")
+        print(f"- [OK] **Billing Overview**: {stats.get('fin_hours', 0.0):.1f} hours processed today, no billing disputes.")
     else:
         for s in fin_issues[:3]:
             print(f"- **{s['client']}**: {s['title']} ({s['message']})")
 
     # A7: RMM / Resilience
-    print(f"\n## 🖥️ 基础设施异常 (RMM)")
+    print(f"\n## Infrastructure Anomalies (RMM)")
     if not rmm_issues: 
-        print(f"- ✅ **设施健康**: 监控 {stats.get('rmm_count', 0)} 个 RMM 警报源，系统运行平稳。")
+        print(f"- [OK] **Infrastructure Health**: Monitoring {stats.get('rmm_count', 0)} RMM alert sources, systems stable.")
     else:
         for s in rmm_issues[:3]:
             print(f"- **{s['client']}**: {s['title']} ({s['message']})")
 
     # A8: Recommended Actions (Summary)
-    print(f"\n## ✅ 建议操作清单 (Action Items)")
+    print(f"\n## Recommended Action Items")
     if not signals:
-        print("- [ ] **All**: 今日无特殊操作，保持监控。")
+        print("- [ ] **All**: No special actions required today, maintain monitoring.")
     else:
         # Deduplicate actions
         actions = {}
@@ -366,7 +367,7 @@ def print_prd_brief(signals, stats):
             print(f"- [ ] **{owner}**: {action}")
 
     # A9: Footer
-    print(f"\n---\n*数据源: PSA (ConnectWise), Fin (QBO), RMM (Automate). 置信度: High.*")
+    print(f"\n---\n*Data Source: PSA (ConnectWise), Fin (QBO), RMM (Automate). Confidence: High.*")
 
 def main():
     try:
